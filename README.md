@@ -1,5 +1,13 @@
 # 🔐 Sevilla Secreta
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PHP](https://img.shields.io/badge/PHP-7.4%2B-777BB4?logo=php&logoColor=white)](https://www.php.net/)
+[![MySQL](https://img.shields.io/badge/MySQL-5.7%2B-4479A1?logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Leaflet](https://img.shields.io/badge/Leaflet-1.9.4-199900?logo=leaflet&logoColor=white)](https://leafletjs.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.x-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES6-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![PWA](https://img.shields.io/badge/PWA-Ready-5A0FC8?logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
+
 > Descubre el patrimonio urbano oculto de Sevilla: placas conmemorativas, estatuas, monumentos y rincones secretos.
 
 **Sevilla Secreta** es una Progressive Web App (PWA) para explorar el patrimonio histórico y cultural menos conocido de Sevilla. Permite a los usuarios descubrir puntos de interés cercanos, navegar por categorías temáticas, escuchar audioguías y marcar sus favoritos.
