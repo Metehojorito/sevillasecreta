@@ -87,22 +87,31 @@ function uploadImage($file, $folder = 'pois') {
         mkdir($uploadDir, 0755, true);
     }
     
-    // Validar MIME type real del archivo (no confiar en $_FILES['type'])
-    $allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-    $mimeType = finfo_file($finfo, $file['tmp_name']);
-    finfo_close($finfo);
-    
-    if (!in_array($mimeType, $allowedMimes)) {
-        return false;
-    }
-    
     // Validar extensión
     $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
     $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
     
     if (!in_array($extension, $allowedExtensions)) {
         return false;
+    }
+    
+    // Validar MIME type (con fallback si fileinfo no está disponible)
+    $allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    
+    if (function_exists('finfo_open')) {
+        // Método preferido: usar fileinfo
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+        
+        if (!in_array($mimeType, $allowedMimes)) {
+            return false;
+        }
+    } else {
+        // Fallback: confiar en el MIME type del navegador
+        if (!in_array($file['type'], $allowedMimes)) {
+            return false;
+        }
     }
     
     // Validar tamaño (max 5MB)

@@ -53,9 +53,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 }
 
-// Filtros
-$categoriaFiltro = $_GET['categoria'] ?? null;
-$busqueda = $_GET['q'] ?? null;
+// Gestionar filtros con sesión
+if (isset($_GET['categoria']) || isset($_GET['q'])) {
+    // Si vienen filtros por GET, guardarlos en sesión
+    if (isset($_GET['categoria'])) {
+        $_SESSION['filtro_categoria_pois'] = $_GET['categoria'];
+    }
+    if (isset($_GET['q'])) {
+        $_SESSION['filtro_busqueda_pois'] = $_GET['q'];
+    }
+} elseif (isset($_GET['limpiar'])) {
+    // Limpiar filtros de sesión
+    unset($_SESSION['filtro_categoria_pois']);
+    unset($_SESSION['filtro_busqueda_pois']);
+}
+
+// Obtener filtros (de GET o de sesión)
+$categoriaFiltro = $_GET['categoria'] ?? $_SESSION['filtro_categoria_pois'] ?? null;
+$busqueda = $_GET['q'] ?? $_SESSION['filtro_busqueda_pois'] ?? null;
 
 // Construir query
 $query = "
@@ -164,7 +179,7 @@ $success = $_GET['success'] ?? null;
                     Filtrar
                 </button>
                 <?php if ($busqueda || $categoriaFiltro): ?>
-                <a href="pois.php" class="px-6 py-2 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition">
+                <a href="pois.php?limpiar=1" class="px-6 py-2 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition">
                     Limpiar
                 </a>
                 <?php endif; ?>

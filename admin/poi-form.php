@@ -96,32 +96,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ", [1, $categoria_id, $titulo, $slug, $descripcion, $direccion, $latitud, $longitud, 
                         $horario ?: null, $precio ?: null, $nuevoOrden, $activo]);
                     
-                    $poiId = $db->getLastInsertId();
+                    $poiId = $db->lastInsertId();
                     Security::logSecurityEvent('poi_created', ['id' => $poiId, 'titulo' => $titulo]);
                 }
                 
-                // Gestionar fotos (máximo 3)
+                // Gestionar fotos recortadas (máximo 3)
                 $fotosActuales = $db->query("SELECT COUNT(*) as total FROM fotos_pois WHERE poi_id = ?", [$poiId])->fetch();
                 $totalFotos = (int)$fotosActuales['total'];
                 
-                if (isset($_FILES['fotos']) && is_array($_FILES['fotos']['name'])) {
-                    $cantidadNuevas = count(array_filter($_FILES['fotos']['name']));
+                if (isset($_POST['cropped_images']) && is_array($_POST['cropped_images'])) {
+                    $cantidadNuevas = count($_POST['cropped_images']);
                     
                     if ($totalFotos + $cantidadNuevas > 3) {
                         $errors[] = 'Máximo 3 fotos por POI';
                     } else {
-                        foreach ($_FILES['fotos']['name'] as $key => $name) {
-                            if ($_FILES['fotos']['error'][$key] === UPLOAD_ERR_OK) {
-                                $file = [
-                                    'name' => $_FILES['fotos']['name'][$key],
-                                    'type' => $_FILES['fotos']['type'][$key],
-                                    'tmp_name' => $_FILES['fotos']['tmp_name'][$key],
-                                    'error' => $_FILES['fotos']['error'][$key],
-                                    'size' => $_FILES['fotos']['size'][$key]
-                                ];
+                        foreach ($_POST['cropped_images'] as $base64Image) {
+                            // Extraer datos de la imagen base64
+                            if (preg_match('/^data:image\/(\w+);base64,/', $base64Image, $type)) {
+                                $base64Image = substr($base64Image, strpos($base64Image, ',') + 1);
+                                $type = strtolower($type[1]); // jpg, png, webp
                                 
-                                $filename = uploadImage($file, 'pois');
-                                if ($filename) {
+                                // Validar tipo
+                                if (!in_array($type, ['jpg', 'jpeg', 'png', 'webp'])) {
+                                    continue;
+                                }
+                                
+                                $imageData = base64_decode($base64Image);
+                                
+                                if ($imageData === false) {
+                                    continue;
+                                }
+                                
+                                // Generar nombre único
+                                $filename = uniqid() . '_' . time() . '.jpg';
+                                $uploadPath = UPLOADS_DIR . 'pois/' . $filename;
+                                
+                                // Guardar archivo
+                                if (file_put_contents($uploadPath, $imageData)) {
+                                    // Insertar en BD
                                     $maxOrdenFoto = $db->query("SELECT MAX(orden) as max FROM fotos_pois WHERE poi_id = ?", [$poiId])->fetch();
                                     $ordenFoto = ($maxOrdenFoto['max'] ?? 0) + 1;
                                     
@@ -161,9 +173,12 @@ $categorias = $db->query("SELECT id, nombre, color, icono FROM categorias WHERE 
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css"/>
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         #map-selector { height: 400px; }
+        .crop-container { max-height: 400px; }
+        #crop-preview { width: 200px; height: 200px; overflow: hidden; border-radius: 8px; border: 2px solid #e5e7eb; }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -327,18 +342,24 @@ $categorias = $db->query("SELECT id, nombre, color, icono FROM categorias WHERE 
                 </div>
                 <?php endif; ?>
                 
-                <?php if (count($fotos) < 3): ?>
-                <input 
-                    type="file" 
-                    name="fotos[]"
-                    accept="image/*"
-                    multiple
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#f2930d] file:text-white file:font-medium hover:file:bg-[#d9820b] file:cursor-pointer"
-                >
-                <p class="text-xs text-gray-500 mt-2">Quedan <?php echo 3 - count($fotos); ?> fotos disponibles. JPG, PNG o WebP. Máximo 5MB por imagen.</p>
-                <?php else: ?>
-                <p class="text-sm text-gray-600">Ya tienes el máximo de 3 fotos. Elimina alguna para subir otra.</p>
-                <?php endif; ?>
+                <!-- Preview de imágenes recortadas (pendientes de guardar) -->
+                <div id="preview-cropped-images" class="grid grid-cols-3 gap-4 mb-4 hidden"></div>
+                
+                <div id="boton-agregar-foto">
+                    <?php if (count($fotos) < 3): ?>
+                    <button type="button" onclick="document.getElementById('foto-input').click()" class="w-full px-4 py-3 border-2 border-dashed border-[#f2930d] text-[#f2930d] rounded-lg font-medium hover:bg-[#f2930d]/5 transition flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">add_photo_alternate</span>
+                        <span id="texto-boton-foto">Agregar foto (quedan <?php echo 3 - count($fotos); ?>)</span>
+                    </button>
+                    <input type="file" id="foto-input" accept="image/*" class="hidden" onchange="abrirCropper(this)">
+                    <p class="text-xs text-gray-500 mt-2">La imagen se recortará en formato cuadrado. JPG, PNG o WebP. Máximo 5MB.</p>
+                    <?php else: ?>
+                    <p class="text-sm text-gray-600">Ya tienes el máximo de 3 fotos. Elimina alguna para subir otra.</p>
+                    <?php endif; ?>
+                </div>
+                
+                <!-- Hidden inputs para imágenes recortadas -->
+                <div id="cropped-images-container"></div>
             </div>
             
             <!-- Activo -->
@@ -369,7 +390,60 @@ $categorias = $db->query("SELECT id, nombre, color, icono FROM categorias WHERE 
         </form>
     </div>
     
+    <!-- Modal Cropper -->
+    <div id="modal-cropper" class="hidden fixed inset-0 bg-black/80 z-[1000] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-gray-800">Recortar imagen</h3>
+                    <button onclick="cerrarCropper()" class="text-gray-400 hover:text-gray-600">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <p class="text-sm text-gray-600 mt-1">Ajusta el área de recorte (será un cuadrado perfecto)</p>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2">
+                        <div class="crop-container">
+                            <img id="imagen-crop" src="" alt="Imagen a recortar">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Preview</label>
+                        <div id="crop-preview" class="mx-auto"></div>
+                        <div class="mt-4 space-y-2">
+                            <button type="button" onclick="cropper.zoom(0.1)" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-sm">zoom_in</span>
+                                Acercar
+                            </button>
+                            <button type="button" onclick="cropper.zoom(-0.1)" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-sm">zoom_out</span>
+                                Alejar
+                            </button>
+                            <button type="button" onclick="cropper.rotate(90)" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-sm">rotate_right</span>
+                                Rotar 90°
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-6 border-t border-gray-200 flex gap-3">
+                <button type="button" onclick="cerrarCropper()" class="flex-1 px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
+                    Cancelar
+                </button>
+                <button type="button" onclick="guardarCrop()" class="flex-1 px-6 py-3 bg-[#f2930d] text-white rounded-lg font-bold hover:bg-[#d9820b]">
+                    Guardar recorte
+                </button>
+            </div>
+        </div>
+    </div>
+    
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script>
         // Mapa
         const map = L.map('map-selector').setView([<?php echo $poi['latitud'] ?? 37.3890924; ?>, <?php echo $poi['longitud'] ?? -5.9844589; ?>], 15);
@@ -392,6 +466,165 @@ $categorias = $db->query("SELECT id, nombre, color, icono FROM categorias WHERE 
         function eliminarFoto(id) {
             if (confirm('¿Eliminar esta foto?')) {
                 window.location.href = `eliminar-foto.php?id=${id}&poi_id=<?php echo $id; ?>`;
+            }
+        }
+        
+        // Sistema de Cropper
+        let cropper = null;
+        let cropperImageCount = 0;
+        
+        function abrirCropper(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            // Validar tamaño
+            if (file.size > 5 * 1024 * 1024) {
+                alert('El archivo es demasiado grande. Máximo 5MB.');
+                input.value = '';
+                return;
+            }
+            
+            // Validar tipo
+            if (!file.type.match(/image\/(jpeg|jpg|png|webp)/)) {
+                alert('Formato no válido. Solo JPG, PNG o WebP.');
+                input.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('imagen-crop');
+                img.src = e.target.result;
+                
+                document.getElementById('modal-cropper').classList.remove('hidden');
+                
+                if (cropper) {
+                    cropper.destroy();
+                }
+                
+                cropper = new Cropper(img, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 1,
+                    restore: false,
+                    guides: true,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false,
+                    preview: '#crop-preview'
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function cerrarCropper() {
+            document.getElementById('modal-cropper').classList.add('hidden');
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            document.getElementById('foto-input').value = '';
+        }
+        
+        function guardarCrop() {
+            if (!cropper) return;
+            
+            // Obtener canvas con la imagen recortada (800x800)
+            const canvas = cropper.getCroppedCanvas({
+                width: 800,
+                height: 800,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high'
+            });
+            
+            // Convertir a blob (JPEG)
+            canvas.toBlob(function(blob) {
+                const reader = new FileReader();
+                reader.onloadend = function() {
+                    const base64data = reader.result;
+                    
+                    // Agregar input hidden con la imagen en base64
+                    const container = document.getElementById('cropped-images-container');
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = `cropped_images[]`;
+                    input.value = base64data;
+                    input.id = `cropped-img-${cropperImageCount}`;
+                    container.appendChild(input);
+                    
+                    // Mostrar preview
+                    const previewContainer = document.getElementById('preview-cropped-images');
+                    previewContainer.classList.remove('hidden');
+                    
+                    const previewDiv = document.createElement('div');
+                    previewDiv.className = 'relative group';
+                    previewDiv.innerHTML = `
+                        <img src="${base64data}" class="w-full h-32 object-cover rounded-lg border-2 border-green-500">
+                        <div class="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                            Nueva
+                        </div>
+                        <button type="button" onclick="eliminarCroppeada(${cropperImageCount})" class="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition">
+                            <span class="material-symbols-outlined text-sm">close</span>
+                        </button>
+                    `;
+                    previewContainer.appendChild(previewDiv);
+                    
+                    cropperImageCount++;
+                    
+                    // Actualizar contador
+                    actualizarContadorFotos();
+                    
+                    cerrarCropper();
+                };
+                reader.readAsDataURL(blob);
+                
+            }, 'image/jpeg', 0.9);
+        }
+        
+        function eliminarCroppeada(index) {
+            // Eliminar input hidden
+            const input = document.getElementById(`cropped-img-${index}`);
+            if (input) {
+                input.remove();
+            }
+            
+            // Eliminar preview
+            const previewContainer = document.getElementById('preview-cropped-images');
+            const previews = previewContainer.children;
+            for (let i = 0; i < previews.length; i++) {
+                if (previews[i].querySelector(`[onclick*="${index}"]`)) {
+                    previews[i].remove();
+                    break;
+                }
+            }
+            
+            // Ocultar contenedor si no hay previews
+            if (previewContainer.children.length === 0) {
+                previewContainer.classList.add('hidden');
+            }
+            
+            cropperImageCount--;
+            actualizarContadorFotos();
+        }
+        
+        function actualizarContadorFotos() {
+            const fotosExistentes = <?php echo count($fotos); ?>;
+            const fotosPendientes = document.querySelectorAll('#cropped-images-container input').length;
+            const totalFotos = fotosExistentes + fotosPendientes;
+            const restantes = 3 - totalFotos;
+            
+            const textoBoton = document.getElementById('texto-boton-foto');
+            const botonContainer = document.getElementById('boton-agregar-foto');
+            
+            if (totalFotos >= 3) {
+                botonContainer.innerHTML = '<p class="text-sm text-gray-600">Ya tienes el máximo de 3 fotos. Guarda el POI o elimina alguna.</p>';
+            } else {
+                if (textoBoton) {
+                    textoBoton.textContent = `Agregar foto (quedan ${restantes})`;
+                }
             }
         }
     </script>
