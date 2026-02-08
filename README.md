@@ -1,119 +1,352 @@
-# Sevilla Secreta 🗝️
+# 🔐 Sevilla Secreta
 
-Aplicación web/móvil para descubrir patrimonio urbano oculto en Sevilla: placas conmemorativas, estatuas, alcantarillas artísticas, monumentos y rincones secretos.
+> Descubre el patrimonio urbano oculto de Sevilla: placas conmemorativas, estatuas, monumentos y rincones secretos.
 
-## 🚀 Instalación
-
-### Requisitos
-- PHP 7.4 o superior
-- MySQL 5.7 o superior / MariaDB 10.2+
-- Apache con mod_rewrite (opcional)
-- Extensiones PHP: PDO, pdo_mysql, gd
-
-### Pasos de instalación
-
-1. **Clonar o descargar el proyecto**
-   ```bash
-   cd /tu/directorio/www
-   # Colocar los archivos en la carpeta sevilla-secreta/
-   ```
-
-2. **Crear la base de datos**
-   - Abrir phpMyAdmin o tu gestor de MySQL
-   - Importar el archivo `database.sql`
-   - Esto creará la base de datos, tablas y datos de prueba
-
-3. **Configurar la conexión**
-   - Editar `includes/config.php`
-   - Modificar las credenciales de base de datos si es necesario:
-     ```php
-     define('DB_HOST', 'localhost');
-     define('DB_NAME', 'sevilla_secreta');
-     define('DB_USER', 'root');
-     define('DB_PASS', '');
-     ```
-
-4. **Configurar permisos**
-   ```bash
-   chmod 755 uploads/
-   chmod 755 uploads/pois/
-   ```
-
-5. **Acceder a la aplicación**
-   - Frontend: `http://localhost/sevilla-secreta/`
-   - Panel Admin: `http://localhost/sevilla-secreta/admin/`
-     - Usuario: `admin`
-     - Contraseña: `admin123`
-
-## 📁 Estructura del proyecto
-
-```
-sevilla-secreta/
-├── admin/                # Panel de administración
-├── api/                  # Endpoints JSON
-├── assets/               # CSS, JS, imágenes
-├── includes/             # Archivos PHP de configuración
-├── uploads/              # Archivos subidos (fotos POIs)
-├── index.php            # Splash screen
-├── categorias.php       # Listado de categorías
-├── mapa.php             # Vista de mapa
-├── lista.php            # Vista de lista
-├── detalle.php          # Detalle de POI
-├── favoritos.php        # Favoritos guardados
-└── database.sql         # Script de base de datos
-```
-
-## 🗄️ Base de datos
-
-### Tablas principales:
-- `ciudades` - Ciudades disponibles en la app
-- `categorias` - Categorías de POIs (placas, estatuas, etc.)
-- `pois` - Puntos de interés
-- `fotos_pois` - Fotos asociadas a cada POI
-- `admin` - Usuarios administradores
-
-## 🔧 Tecnologías
-
-- **Backend:** PHP puro
-- **Base de datos:** MySQL/MariaDB
-- **Frontend:** HTML5, TailwindCSS (CDN), JavaScript vanilla
-- **Mapas:** Leaflet.js + Carto tiles (OpenStreetMap)
-- **Iconos:** Material Symbols (Google)
-- **Tipografía:** Plus Jakarta Sans, Playfair Display
-
-## 📱 Características
-
-- ✅ Múltiples ciudades (preparado, iniciando con Sevilla)
-- ✅ Categorización de POIs
-- ✅ Vista de mapa interactivo
-- ✅ Vista de lista con búsqueda
-- ✅ Favoritos (localStorage, sin login)
-- ✅ Cálculo de distancia en tiempo real
-- ✅ Lectura de voz de descripciones (Web Speech API)
-- ✅ Responsive design
-- ✅ Modo oscuro/claro
-- ✅ Panel de administración
-
-## 🎨 Paleta de colores
-
-- **Primario:** `#f2930d` (Dorado sevillano)
-- **Fondo claro:** `#f8f7f5`
-- **Fondo oscuro:** `#221b10`
-
-## 📝 Próximas mejoras
-
-- [ ] API REST completa
-- [ ] Sistema de usuarios con login
-- [ ] Rutas/itinerarios guardados
-- [ ] Compartir POIs en RRSS
-- [ ] Notificaciones de POIs cercanos
-- [ ] Empaquetado con Capacitor para tiendas
-- [ ] PWA con service workers
-
-## 👤 Créditos
-
-Desarrollado para descubrir y preservar el patrimonio oculto de Sevilla.
+**Sevilla Secreta** es una Progressive Web App (PWA) para explorar el patrimonio histórico y cultural menos conocido de Sevilla. Permite a los usuarios descubrir puntos de interés cercanos, navegar por categorías temáticas, escuchar audioguías y marcar sus favoritos.
 
 ---
 
-**Licencia:** Proyecto personal - Todos los derechos reservados
+## 📱 Características
+
+### **Aplicación Pública**
+- ✅ **Exploración por categorías** - Placas conmemorativas, estatuas, monumentos, alcantarillas artísticas, etc.
+- ✅ **Mapa interactivo** - Visualiza POIs con Leaflet.js, marcadores personalizados y geolocalización
+- ✅ **Vista lista** - Filtrado y búsqueda de puntos de interés
+- ✅ **Detalle de POI** - Carrusel de fotos, descripción, ubicación, horarios y precios
+- ✅ **Audioguía** - Text-to-Speech con Web Speech API (español)
+- ✅ **Favoritos** - Sistema de marcadores con localStorage
+- ✅ **Geolocalización** - Calcula distancia desde tu ubicación actual
+- ✅ **Compartir** - Web Share API con fallback a clipboard
+- ✅ **Dark Mode** - Tema claro/oscuro persistente
+- ✅ **PWA Ready** - Instalable como app nativa (manifest.json)
+- ✅ **Responsive** - Optimizado para móvil, tablet y escritorio
+
+### **Panel de Administración**
+- 🔒 **Login seguro** - Protección CSRF, rate limiting, session hijacking prevention
+- 📊 **Dashboard** - Estadísticas de POIs, categorías y fotos
+- 🗂️ **CRUD de Categorías** - Drag & drop para ordenar, color picker, selector de iconos Material Symbols
+- 📍 **CRUD de POIs** - Selector de ubicación con mapa Leaflet, gestión de hasta 3 fotos por POI
+- 🖼️ **Gestión de fotos** - Upload con validación estricta (WebP, JPEG, PNG), preview y eliminación
+- 🔐 **Seguridad** - Tokens CSRF, sanitización XSS, logging de eventos, prepared statements
+
+---
+
+## 🛠️ Tecnologías
+
+### **Frontend**
+- **HTML5** + **Tailwind CSS 3** (CDN)
+- **JavaScript ES6** - Módulos externos reutilizables
+- **Leaflet.js 1.9.4** - Mapas interactivos
+- **Material Symbols** - Iconografía de Google
+- **Web Speech API** - Síntesis de voz
+- **localStorage API** - Persistencia de favoritos y tema
+
+### **Backend**
+- **PHP 7.4+** - Lógica del servidor
+- **MySQL 5.7+ / MariaDB** - Base de datos relacional
+- **PDO** - Prepared statements para prevenir SQL injection
+
+### **Seguridad**
+- **CSRF Tokens** - Protección contra Cross-Site Request Forgery
+- **XSS Prevention** - Sanitización con `htmlspecialchars()`
+- **SQL Injection Protection** - PDO prepared statements
+- **Session Security** - Regeneración de IDs, validación de User Agent
+- **Rate Limiting** - Máximo 5 intentos de login cada 15 minutos
+- **Password Hashing** - Bcrypt (cost 12)
+- **Security Logging** - Registro de eventos en `/logs/security.log`
+
+### **Librerías Externas**
+- **Sortable.js** - Drag & drop en listados del admin
+- **Google Fonts** - Plus Jakarta Sans
+
+---
+
+## 📂 Estructura del Proyecto
+
+```
+sevilla-secreta/
+├── admin/                      # Panel de administración
+│   ├── login.php              # Login seguro
+│   ├── dashboard.php          # Dashboard principal
+│   ├── categorias.php         # CRUD categorías (listado)
+│   ├── categoria-form.php     # Formulario crear/editar categoría
+│   ├── pois.php               # CRUD POIs (listado)
+│   ├── poi-form.php           # Formulario crear/editar POI
+│   ├── eliminar-foto.php      # Eliminar fotos de POIs
+│   ├── logout.php             # Cierre de sesión
+│   ├── icons-data.js          # 130+ iconos Material Symbols
+│   └── includes/
+│       └── navbar.php         # Navegación del admin
+├── api/                       # Endpoints JSON
+│   ├── categorias.php         # GET categorías activas
+│   ├── pois.php               # GET POIs por categoría
+│   └── poi-detalle.php        # GET detalle de POI
+├── assets/
+│   ├── css/
+│   │   └── app.css            # Estilos globales y utilidades
+│   ├── js/
+│   │   ├── app.js             # Funciones globales (fetchAPI, toasts, etc.)
+│   │   ├── favoritos.js       # FavoritosManager (localStorage)
+│   │   ├── mapa.js            # MapaManager (Leaflet utilities)
+│   │   └── voz.js             # AudioguiaManager (Web Speech API)
+│   └── img/
+│       ├── logo.png           # Logo principal
+│       ├── icon-192.png       # PWA icon
+│       ├── icon-512.png       # PWA icon
+│       ├── placeholder-poi.svg
+│       └── placeholder-categoria.svg
+├── includes/
+│   ├── config.php             # Configuración global
+│   ├── db.php                 # Clase Database (PDO singleton)
+│   ├── funciones.php          # Funciones auxiliares (slug, upload, etc.)
+│   ├── security.php           # Clase Security (CSRF, XSS, sessions)
+│   └── asset-helper.php       # Helper para cache busting automático
+├── logs/
+│   └── security.log           # Registro de eventos de seguridad
+├── uploads/
+│   ├── categorias/            # Imágenes de portada de categorías
+│   └── pois/                  # Fotos de POIs (máx 3 por POI)
+├── index.php                  # Splash screen
+├── categorias.php             # Grid de categorías
+├── mapa.php                   # Mapa interactivo
+├── lista.php                  # Listado de POIs
+├── detalle.php                # Detalle de POI
+├── favoritos.php              # Página de favoritos
+├── manifest.json              # PWA manifest
+├── favicon.ico                # Favicon
+├── database.sql               # Schema de base de datos
+└── README.md                  # Este archivo
+```
+
+---
+
+## 🚀 Instalación
+
+### **Requisitos**
+- **PHP 7.4+** con extensiones: `pdo`, `pdo_mysql`, `fileinfo`, `gd`
+- **MySQL 5.7+** o **MariaDB 10.3+**
+- **Servidor web** (Apache o Nginx)
+
+### **Pasos**
+
+1. **Clonar repositorio**
+   ```bash
+   git clone https://github.com/tu-usuario/sevilla-secreta.git
+   cd sevilla-secreta
+   ```
+
+2. **Importar base de datos**
+   ```bash
+   mysql -u root -p < database.sql
+   ```
+
+3. **Configurar credenciales** (si es necesario)
+   
+   Edita `includes/config.php`:
+   ```php
+   define('DB_HOST', 'localhost');
+   define('DB_NAME', 'sevilla_secreta');
+   define('DB_USER', 'root');
+   define('DB_PASS', '');
+   ```
+
+4. **Crear carpetas de uploads**
+   ```bash
+   mkdir -p uploads/pois uploads/categorias logs
+   chmod 755 uploads/pois uploads/categorias logs
+   ```
+
+5. **Aplicar migración de formato de categorías** (si usas una BD antigua)
+   ```bash
+   mysql -u root -p sevilla_secreta < migration-add-formato.sql
+   ```
+
+6. **Acceder a la aplicación**
+   - **App pública:** `http://localhost/sevilla-secreta/`
+   - **Panel admin:** `http://localhost/sevilla-secreta/admin/`
+   
+   **Credenciales por defecto:**
+   - Usuario: `admin`
+   - Contraseña: `Admin123!` (cámbiala tras primer login)
+
+---
+
+## 🗄️ Base de Datos
+
+### **Tablas Principales**
+
+#### `ciudades`
+Ciudades disponibles en la aplicación.
+- `id`, `nombre`, `slug`, `latitud`, `longitud`, `activa`
+
+#### `categorias`
+Tipos de secretos urbanos.
+- `id`, `ciudad_id`, `nombre`, `slug`, `icono`, `color`, `imagen_portada`, `formato` (1x1 o 1x2), `orden`, `activa`
+
+#### `pois`
+Puntos de interés.
+- `id`, `ciudad_id`, `categoria_id`, `titulo`, `slug`, `descripcion`, `direccion`, `latitud`, `longitud`, `horario`, `precio`, `orden`, `activo`
+
+#### `fotos_pois`
+Fotos de POIs (máximo 3 por POI).
+- `id`, `poi_id`, `filename`, `orden`
+
+#### `admin`
+Usuarios administradores.
+- `id`, `usuario`, `password`, `nombre`, `created_at`
+
+---
+
+## 🔒 Seguridad
+
+### **Protecciones Implementadas**
+
+| Vulnerabilidad | Protección |
+|----------------|------------|
+| **SQL Injection** | PDO prepared statements en todas las queries |
+| **XSS** | `htmlspecialchars()` con `ENT_QUOTES` en todos los outputs |
+| **CSRF** | Tokens únicos por sesión validados en cada POST |
+| **Session Hijacking** | Validación de User Agent, regeneración periódica de session ID |
+| **Session Fixation** | `session_regenerate_id(true)` en cada login |
+| **Brute Force** | Rate limiting (máx 5 intentos cada 15 min) |
+| **Timing Attacks** | Delay de 0.5s en login fallido |
+| **Path Traversal** | Validación de rutas en upload de archivos |
+| **File Upload** | Validación MIME con `finfo`, extensiones permitidas, tamaño máx 5MB |
+| **Clickjacking** | Header `X-Frame-Options: DENY` |
+
+### **Logging**
+Todos los eventos de seguridad se registran en `/logs/security.log`:
+- Logins exitosos/fallidos
+- Rate limit excedido
+- Ataques CSRF detectados
+- Creación/edición/eliminación de contenido
+
+---
+
+## 📱 PWA (Progressive Web App)
+
+La aplicación es instalable como app nativa:
+
+1. **En Chrome móvil:** "Agregar a pantalla de inicio"
+2. **En Safari iOS:** Compartir → "Añadir a pantalla de inicio"
+3. **En Chrome escritorio:** Icono de instalación en la barra de direcciones
+
+**Características PWA:**
+- ✅ Manifest.json configurado
+- ✅ Iconos 192x192 y 512x512
+- ✅ Tema color personalizado (#f2930d)
+- ⏳ Service Worker (pendiente para offline)
+
+---
+
+## 🎨 Personalización
+
+### **Cambiar colores**
+
+Edita las variables en `tailwind.config` (presente en cada página):
+
+```javascript
+tailwind.config = {
+    theme: {
+        extend: {
+            colors: {
+                "primary": "#f2930d",        // Color principal (naranja)
+                "background-light": "#f8f7f5", // Fondo claro
+                "background-dark": "#221b10",  // Fondo oscuro
+            }
+        }
+    }
+}
+```
+
+### **Añadir nueva categoría**
+
+1. Panel admin → **Categorías** → **Nueva Categoría**
+2. Completa el formulario:
+   - Nombre (genera slug automáticamente)
+   - Icono (selector con 130+ iconos Material Symbols)
+   - Color (color picker)
+   - Formato (cuadrado 1x1 o rectangular 1x2)
+   - Imagen de portada (opcional)
+3. Guardar → Se añade al final del orden
+
+### **Añadir nuevo POI**
+
+1. Panel admin → **POIs** → **Nuevo POI**
+2. Completa el formulario:
+   - Categoría (dropdown)
+   - Título y descripción
+   - Ubicación (click en mapa para coordenadas)
+   - Dirección
+   - Horario y precio (opcionales)
+   - Hasta 3 fotos
+3. Guardar → Se añade al final del orden
+
+---
+
+## 🐛 Problemas Conocidos
+
+### **Web Speech API en iOS**
+- La síntesis de voz funciona pero **no permite pausa/reanudación**.
+- **Solución actual:** Al pausar, se detiene completamente. Al reanudar, comienza desde el principio.
+
+### **Geolocalización requiere HTTPS**
+- En producción, la geolocalización solo funciona con HTTPS.
+- En localhost HTTP funciona sin problemas.
+
+---
+
+## 📋 Roadmap
+
+- [ ] Service Worker para funcionamiento offline
+- [ ] Cache de mapas para uso sin conexión
+- [ ] Rutas entre POIs
+- [ ] Sistema de comentarios/valoraciones
+- [ ] Gamificación (insignias por visitas)
+- [ ] Exportar ruta a Google Maps
+- [ ] Multiidioma (inglés, francés)
+- [ ] Notificaciones push para nuevos POIs cercanos
+- [ ] Integración con redes sociales
+
+---
+
+## 👥 Contribuir
+
+¡Las contribuciones son bienvenidas! Si encuentras un bug o tienes una idea:
+
+1. Fork el proyecto
+2. Crea una rama (`git checkout -b feature/nueva-funcionalidad`)
+3. Commit tus cambios (`git commit -m 'Añadir nueva funcionalidad'`)
+4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
+5. Abre un Pull Request
+
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la licencia **MIT**. Consulta el archivo `LICENSE` para más detalles.
+
+---
+
+## 📧 Contacto
+
+**Proyecto:** Sevilla Secreta  
+**GitHub:** [https://github.com/tu-usuario/sevilla-secreta](https://github.com/tu-usuario/sevilla-secreta)
+
+---
+
+## 🙏 Agradecimientos
+
+- **Leaflet.js** - Biblioteca de mapas interactivos
+- **Tailwind CSS** - Framework CSS utility-first
+- **Material Symbols** - Iconografía de Google
+- **OpenStreetMap** - Datos cartográficos
+- **CARTO** - Tiles de mapa
+
+---
+
+<div align="center">
+  <img src="assets/img/logo.png" alt="Sevilla Secreta" width="120">
+  <br><br>
+  <strong>Hecho con ❤️ en Sevilla</strong>
+</div>
