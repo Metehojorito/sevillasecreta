@@ -1,0 +1,18 @@
+# Protección adicional para carpeta admin
+
+# Prevenir listado de directorios
+Options -Indexes
+
+# Proteger archivos sensibles
+<FilesMatch "\.(log|md|json)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Headers de seguridad
+<IfModule mod_headers.c>
+    Header set X-Frame-Options "DENY"
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>

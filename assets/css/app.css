@@ -1,0 +1,298 @@
+/**
+ * Sevilla Secreta - Estilos Globales
+ * Complemento a Tailwind CSS
+ */
+
+/* ============================================
+   VARIABLES CSS
+   ============================================ */
+:root {
+    --primary: #f2930d;
+    --background-light: #f8f7f5;
+    --background-dark: #221b10;
+    --text-dark: #1c160d;
+    --text-light: #fcfaf8;
+}
+
+/* ============================================
+   RESET Y BASE
+   ============================================ */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+/* ============================================
+   SCROLLBAR PERSONALIZADO
+   ============================================ */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #d9820b;
+}
+
+/* Ocultar scrollbar pero mantener funcionalidad */
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* ============================================
+   ICONOS MATERIAL SYMBOLS
+   ============================================ */
+.material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+}
+
+.icon-filled {
+    font-variation-settings: 'FILL' 1;
+}
+
+/* ============================================
+   ANIMACIONES DE ONDA (PARA AUDIO)
+   ============================================ */
+@keyframes wave {
+    0%, 100% {
+        height: 4px;
+    }
+    50% {
+        height: 12px;
+    }
+}
+
+.audio-wave-bar {
+    width: 2px;
+    height: 4px;
+    background-color: currentColor;
+    border-radius: 1px;
+    animation: wave 1s ease-in-out infinite;
+}
+
+.audio-wave-bar.wave-1 {
+    animation-delay: 0.1s;
+}
+
+.audio-wave-bar.wave-2 {
+    animation-delay: 0.3s;
+}
+
+.audio-wave-bar.wave-3 {
+    animation-delay: 0.2s;
+}
+
+.audio-wave-bar.wave-4 {
+    animation-delay: 0.4s;
+}
+
+.audio-wave-bar.paused {
+    animation: none;
+    height: 4px;
+}
+
+/* ============================================
+   EFECTOS DE CRISTAL (GLASSMORPHISM)
+   ============================================ */
+.glass-effect {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background-color: rgba(248, 247, 245, 0.85);
+}
+
+.dark .glass-effect {
+    background-color: rgba(34, 27, 16, 0.85);
+}
+
+/* ============================================
+   GRADIENTES PERSONALIZADOS
+   ============================================ */
+.golden-gradient {
+    background: radial-gradient(circle at center, #f2930d 0%, #8b4513 100%);
+}
+
+.gradient-overlay {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.8) 100%);
+}
+
+/* ============================================
+   SPINNER DE CARGA
+   ============================================ */
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ============================================
+   MARCADORES DE MAPA PERSONALIZADOS
+   ============================================ */
+.custom-marker {
+    background: none;
+    border: none;
+}
+
+.custom-marker .material-symbols-outlined {
+    font-size: 18px;
+}
+
+/* ============================================
+   TRANSICIONES SUAVES
+   ============================================ */
+.smooth-transition {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   LÍNEA TRUNCADA
+   ============================================ */
+.line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+/* ============================================
+   SAFE AREAS (PARA iOS)
+   ============================================ */
+.safe-top {
+    padding-top: env(safe-area-inset-top);
+}
+
+.safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-left {
+    padding-left: env(safe-area-inset-left);
+}
+
+.safe-right {
+    padding-right: env(safe-area-inset-right);
+}
+
+/* ============================================
+   SKELETON LOADING
+   ============================================ */
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        rgba(0, 0, 0, 0.06) 25%,
+        rgba(0, 0, 0, 0.12) 50%,
+        rgba(0, 0, 0, 0.06) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.dark .skeleton {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.06) 25%,
+        rgba(255, 255, 255, 0.12) 50%,
+        rgba(255, 255, 255, 0.06) 75%
+    );
+    background-size: 200% 100%;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* ============================================
+   UTILIDADES ADICIONALES
+   ============================================ */
+.aspect-square {
+    aspect-ratio: 1 / 1;
+}
+
+.no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Evitar zoom al hacer focus en inputs en iOS */
+@media screen and (max-width: 768px) {
+    input, textarea, select {
+        font-size: 16px !important;
+    }
+}
+
+/* ============================================
+   MODO OSCURO
+   ============================================ */
+.dark {
+    color-scheme: dark;
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+}
