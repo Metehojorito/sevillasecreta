@@ -65,18 +65,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Ya existe una categoría con ese nombre';
         }
         
-        // Subir imagen de portada
+        // Gestionar imagen de portada
         $imagenPortada = $isEdit ? $categoria['imagen_portada'] : null;
-        if (isset($_FILES['imagen_portada']) && $_FILES['imagen_portada']['error'] === UPLOAD_ERR_OK) {
-            $filename = uploadImage($_FILES['imagen_portada'], 'categorias');
-            if ($filename) {
-                // Eliminar imagen anterior si existe
-                if ($imagenPortada) {
-                    deleteImage(basename($imagenPortada), 'categorias');
+        
+        // Eliminar imagen si se solicitó
+        if (isset($_POST['eliminar_imagen']) && $_POST['eliminar_imagen'] === '1' && $imagenPortada) {
+            deleteImage(basename($imagenPortada), 'categorias');
+            $imagenPortada = null;
+        }
+        
+        // Procesar imagen recortada
+        if (isset($_POST['cropped_image_categoria']) && !empty($_POST['cropped_image_categoria'])) {
+            $base64Image = $_POST['cropped_image_categoria'];
+            
+            // Extraer datos de la imagen base64
+            if (preg_match('/^data:image\/(\w+);base64,/', $base64Image, $type)) {
+                $base64Image = substr($base64Image, strpos($base64Image, ',') + 1);
+                $imageData = base64_decode($base64Image);
+                
+                if ($imageData !== false) {
+                    // Eliminar imagen anterior si existe
+                    if ($imagenPortada) {
+                        deleteImage(basename($imagenPortada), 'categorias');
+                    }
+                    
+                    // Generar nombre único
+                    $filename = uniqid() . '_' . time() . '.jpg';
+                    $uploadPath = UPLOADS_DIR . 'categorias/' . $filename;
+                    
+                    // Crear directorio si no existe
+                    if (!is_dir(UPLOADS_DIR . 'categorias/')) {
+                        mkdir(UPLOADS_DIR . 'categorias/', 0755, true);
+                    }
+                    
+                    // Guardar archivo
+                    if (file_put_contents($uploadPath, $imageData)) {
+                        $imagenPortada = 'uploads/categorias/' . $filename;
+                    } else {
+                        $errors[] = 'Error al guardar la imagen';
+                    }
                 }
-                $imagenPortada = 'uploads/categorias/' . $filename;
-            } else {
-                $errors[] = 'Error al subir la imagen';
             }
         }
         
@@ -130,9 +158,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css"/>
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px; }
+        .crop-container { max-height: 400px; }
+        #crop-preview-cat { width: 200px; height: 200px; overflow: hidden; border-radius: 8px; border: 2px solid #e5e7eb; }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -280,22 +311,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             
             <!-- Imagen de portada -->
-            <div class="mb-6">
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
                 <label class="block text-sm font-semibold text-gray-700 mb-2">
-                    Imagen de portada
+                    Imagen de portada (opcional)
                 </label>
+                
                 <?php if ($isEdit && $categoria['imagen_portada']): ?>
-                <div class="mb-3">
-                    <img src="../<?php echo Security::escape($categoria['imagen_portada']); ?>" class="w-full max-w-md h-48 object-cover rounded-lg">
+                <div class="mb-4">
+                    <div class="relative group inline-block max-w-md">
+                        <img src="../<?php echo Security::escape($categoria['imagen_portada']); ?>" class="w-full h-48 object-cover rounded-lg border-2 border-gray-200">
+                        <button type="button" onclick="eliminarImagenCategoria()" class="absolute top-2 right-2 bg-red-600 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition shadow-lg">
+                            <span class="material-symbols-outlined">delete</span>
+                        </button>
+                    </div>
+                    <input type="hidden" name="eliminar_imagen" id="eliminar-imagen-input" value="0">
                 </div>
                 <?php endif; ?>
-                <input 
-                    type="file" 
-                    name="imagen_portada"
-                    accept="image/*"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#f2930d] file:text-white file:font-medium hover:file:bg-[#d9820b] file:cursor-pointer"
-                >
-                <p class="text-xs text-gray-500 mt-1">JPG, PNG o WebP. Máximo 5MB</p>
+                
+                <div id="preview-imagen-categoria" class="mb-4 hidden">
+                    <div class="relative group inline-block max-w-md">
+                        <img id="preview-img-cat" src="" class="w-full h-48 object-cover rounded-lg border-2 border-green-500">
+                        <div class="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                            Nueva
+                        </div>
+                        <button type="button" onclick="eliminarImagenCategoriaRecortada()" class="absolute top-2 right-2 bg-red-600 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition shadow-lg">
+                            <span class="material-symbols-outlined">delete</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <button type="button" onclick="document.getElementById('imagen-cat-input').click()" class="px-4 py-3 border-2 border-dashed border-[#f2930d] text-[#f2930d] rounded-lg font-medium hover:bg-[#f2930d]/5 transition flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">add_photo_alternate</span>
+                    <?php echo ($isEdit && $categoria['imagen_portada']) ? 'Cambiar imagen' : 'Agregar imagen'; ?>
+                </button>
+                <input type="file" id="imagen-cat-input" accept="image/*" class="hidden" onchange="abrirCropperCategoria(this)">
+                <p class="text-xs text-gray-500 mt-2">La imagen se recortará en formato cuadrado (800x800px). JPG, PNG o WebP. Máximo 5MB.</p>
+                
+                <!-- Hidden input para imagen recortada -->
+                <input type="hidden" name="cropped_image_categoria" id="cropped-image-categoria">
             </div>
             
             <!-- Activa -->
@@ -404,6 +457,166 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 const icon = btn.dataset.icon;
                 btn.style.display = icon.includes(busqueda) ? 'flex' : 'none';
             });
+        }
+    </script>
+    
+    <!-- Modal Cropper Categoría -->
+    <div id="modal-cropper-cat" class="hidden fixed inset-0 bg-black/80 z-[1000] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-gray-800">Recortar imagen de portada</h3>
+                    <button onclick="cerrarCropperCategoria()" class="text-gray-400 hover:text-gray-600">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <p class="text-sm text-gray-600 mt-1">Ajusta el área de recorte (será un cuadrado perfecto 800x800)</p>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2">
+                        <div class="crop-container">
+                            <img id="imagen-crop-cat" src="" alt="Imagen a recortar">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Preview</label>
+                        <div id="crop-preview-cat" class="mx-auto"></div>
+                        <div class="mt-4 space-y-2">
+                            <button type="button" onclick="cropperCat.zoom(0.1)" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-sm">zoom_in</span>
+                                Acercar
+                            </button>
+                            <button type="button" onclick="cropperCat.zoom(-0.1)" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-sm">zoom_out</span>
+                                Alejar
+                            </button>
+                            <button type="button" onclick="cropperCat.rotate(90)" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-sm">rotate_right</span>
+                                Rotar 90°
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-6 border-t border-gray-200 flex gap-3">
+                <button type="button" onclick="cerrarCropperCategoria()" class="flex-1 px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50">
+                    Cancelar
+                </button>
+                <button type="button" onclick="guardarCropCategoria()" class="flex-1 px-6 py-3 bg-[#f2930d] text-white rounded-lg font-bold hover:bg-[#d9820b]">
+                    Guardar recorte
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    <script>
+        // Sistema de Cropper para Categorías
+        let cropperCat = null;
+        
+        function abrirCropperCategoria(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            // Validar tamaño
+            if (file.size > 5 * 1024 * 1024) {
+                alert('El archivo es demasiado grande. Máximo 5MB.');
+                input.value = '';
+                return;
+            }
+            
+            // Validar tipo
+            if (!file.type.match(/image\/(jpeg|jpg|png|webp)/)) {
+                alert('Formato no válido. Solo JPG, PNG o WebP.');
+                input.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('imagen-crop-cat');
+                img.src = e.target.result;
+                
+                document.getElementById('modal-cropper-cat').classList.remove('hidden');
+                
+                if (cropperCat) {
+                    cropperCat.destroy();
+                }
+                
+                cropperCat = new Cropper(img, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 1,
+                    restore: false,
+                    guides: true,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false,
+                    preview: '#crop-preview-cat'
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function cerrarCropperCategoria() {
+            document.getElementById('modal-cropper-cat').classList.add('hidden');
+            if (cropperCat) {
+                cropperCat.destroy();
+                cropperCat = null;
+            }
+            document.getElementById('imagen-cat-input').value = '';
+        }
+        
+        function guardarCropCategoria() {
+            if (!cropperCat) return;
+            
+            // Obtener canvas con la imagen recortada (800x800)
+            const canvas = cropperCat.getCroppedCanvas({
+                width: 800,
+                height: 800,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high'
+            });
+            
+            // Convertir a blob (JPEG)
+            canvas.toBlob(function(blob) {
+                const reader = new FileReader();
+                reader.onloadend = function() {
+                    const base64data = reader.result;
+                    
+                    // Guardar en input hidden
+                    document.getElementById('cropped-image-categoria').value = base64data;
+                    
+                    // Mostrar preview
+                    const previewContainer = document.getElementById('preview-imagen-categoria');
+                    const previewImg = document.getElementById('preview-img-cat');
+                    previewImg.src = base64data;
+                    previewContainer.classList.remove('hidden');
+                    
+                    cerrarCropperCategoria();
+                };
+                reader.readAsDataURL(blob);
+                
+            }, 'image/jpeg', 0.9);
+        }
+        
+        function eliminarImagenCategoria() {
+            if (confirm('¿Eliminar la imagen de portada actual?')) {
+                document.getElementById('eliminar-imagen-input').value = '1';
+                event.target.closest('.relative').style.opacity = '0.3';
+            }
+        }
+        
+        function eliminarImagenCategoriaRecortada() {
+            document.getElementById('cropped-image-categoria').value = '';
+            document.getElementById('preview-imagen-categoria').classList.add('hidden');
+            document.getElementById('preview-img-cat').src = '';
         }
     </script>
 </body>
