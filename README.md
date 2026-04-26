@@ -28,13 +28,15 @@
 - ✅ **Dark Mode** - Tema claro/oscuro persistente
 - ✅ **PWA Ready** - Instalable como app nativa (manifest.json)
 - ✅ **Responsive** - Optimizado para móvil, tablet y escritorio
+- ✅ **Sugerencias de usuarios** - Formulario para proponer nuevos lugares secretos
 
 ### **Panel de Administración**
 - 🔒 **Login seguro** - Protección CSRF, rate limiting, session hijacking prevention
-- 📊 **Dashboard** - Estadísticas de POIs, categorías y fotos
+- 📊 **Dashboard** - Estadísticas de POIs, categorías, fotos y sugerencias pendientes
 - 🗂️ **CRUD de Categorías** - Drag & drop para ordenar, color picker, selector de iconos Material Symbols
 - 📍 **CRUD de POIs** - Selector de ubicación con mapa Leaflet, gestión de hasta 3 fotos por POI
 - 🖼️ **Gestión de fotos** - Upload con validación estricta (WebP, JPEG, PNG), preview y eliminación
+- 💡 **Gestión de sugerencias** - Revisión, edición y publicación directa de lugares propuestos por usuarios
 - 🔐 **Seguridad** - Tokens CSRF, sanitización XSS, logging de eventos, prepared statements
 
 ---
@@ -80,6 +82,7 @@ sevilla-secreta/
 │   ├── categoria-form.php     # Formulario crear/editar categoría
 │   ├── pois.php               # CRUD POIs (listado)
 │   ├── poi-form.php           # Formulario crear/editar POI
+│   ├── sugerencias.php        # Gestión de sugerencias de usuarios
 │   ├── eliminar-foto.php      # Eliminar fotos de POIs
 │   ├── logout.php             # Cierre de sesión
 │   ├── icons-data.js          # 130+ iconos Material Symbols
@@ -108,7 +111,8 @@ sevilla-secreta/
 │   ├── db.php                 # Clase Database (PDO singleton)
 │   ├── funciones.php          # Funciones auxiliares (slug, upload, etc.)
 │   ├── security.php           # Clase Security (CSRF, XSS, sessions)
-│   └── asset-helper.php       # Helper para cache busting automático
+│   ├── asset-helper.php       # Helper para cache busting automático
+│   └── bottom-nav.php         # Barra de navegación inferior (componente reutilizable)
 ├── logs/
 │   └── security.log           # Registro de eventos de seguridad
 ├── uploads/
@@ -120,6 +124,7 @@ sevilla-secreta/
 ├── lista.php                  # Listado de POIs
 ├── detalle.php                # Detalle de POI
 ├── favoritos.php              # Página de favoritos
+├── sugerir.php                # Formulario para sugerir nuevos lugares
 ├── manifest.json              # PWA manifest
 ├── favicon.ico                # Favicon
 ├── database.sql               # Schema de base de datos
@@ -203,6 +208,40 @@ Fotos de POIs (máximo 3 por POI).
 Usuarios administradores.
 - `id`, `usuario`, `password`, `nombre`, `created_at`
 
+#### `sugerencias_pois`
+Lugares propuestos por usuarios pendientes de revisión.
+- `id`, `ciudad_id`, `categoria_id`, `titulo`, `descripcion`, `latitud`, `longitud`
+- `estado` — `pendiente` | `aprobada` | `rechazada`
+- `ip_usuario`, `user_agent` — trazabilidad del origen
+- `notas_admin`, `revisado_at`, `revisado_por` — metadatos de revisión
+
+---
+
+## 💡 Flujo de Sugerencias
+
+Los usuarios pueden proponer nuevos lugares directamente desde la app pública. El proceso completo es:
+
+```
+Usuario rellena sugerir.php
+        │
+        ▼
+sugerencias_pois (estado = pendiente)
+        │
+        ▼
+Admin recibe alerta en dashboard
+        │
+        ├─► Descartar → se elimina de la BD
+        │
+        └─► Aceptar → se revisa y edita el contenido
+                    → se crea el POI en la tabla pois
+                    → se elimina la sugerencia
+```
+
+1. **El usuario** accede a `sugerir.php` desde el botón "Sugerir" de la barra de navegación inferior, rellena título, descripción, categoría y marca la ubicación en el mapa.
+2. **El dashboard** muestra un contador con las sugerencias pendientes. Si hay alguna, la tarjeta se resalta en ámbar.
+3. **El administrador** accede a `admin/sugerencias.php`, ve el listado filtrable por estado y abre el modal de detalle de cada sugerencia.
+4. En el modal puede **editar** el contenido (título, descripción, categoría, dirección, horario, precio) antes de publicar, ver la ubicación en un mapa mini y elegir entre **aceptar** (crea el POI automáticamente) o **descartar** (elimina la sugerencia).
+
 ---
 
 ## 🔒 Seguridad
@@ -228,6 +267,7 @@ Todos los eventos de seguridad se registran en `/logs/security.log`:
 - Rate limit excedido
 - Ataques CSRF detectados
 - Creación/edición/eliminación de contenido
+- Sugerencias aceptadas o descartadas
 
 ---
 
@@ -285,10 +325,19 @@ tailwind.config = {
    - Categoría (dropdown)
    - Título y descripción
    - Ubicación (click en mapa para coordenadas)
-   - Dirección
-   - Horario y precio (opcionales)
+   - Dirección, horario y precio (opcionales)
    - Hasta 3 fotos
 3. Guardar → Se añade al final del orden
+
+### **Gestionar sugerencias**
+
+1. Panel admin → **Sugerencias** (o directamente desde el dashboard si hay pendientes)
+2. Filtra por estado: **Pendientes** o **Todas**
+3. Pulsa **Ver** en cualquier sugerencia para abrir el modal de detalle:
+   - Revisa la descripción original y la ubicación en el mapa mini
+   - Edita título, categoría, descripción, dirección, horario y precio
+   - **Aceptar y publicar** → crea el POI automáticamente
+   - **Descartar** → elimina la sugerencia de la BD
 
 ---
 
