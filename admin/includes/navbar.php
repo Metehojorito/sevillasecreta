@@ -15,6 +15,9 @@
                 <a href="pois.php" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition">
                     POIs
                 </a>
+				<a href="sugerencias.php" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition">
+                    Sugerencias
+                </a>
             </nav>
         </div>
         <div class="flex items-center gap-4">

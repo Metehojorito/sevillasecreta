@@ -57,16 +57,11 @@ require_once 'includes/config.php';
             </div>
         </main>
         
-        <nav class="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-black/10 dark:border-white/10 glass-effect px-8 h-20 pb-safe">
-            <a class="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 hover:text-primary transition-colors" href="categorias.php">
-                <span class="material-symbols-outlined text-2xl">explore</span>
-                <span class="text-[10px] font-bold uppercase tracking-tight">Explorar</span>
-            </a>
-            <a class="flex flex-col items-center gap-1 text-primary" href="favoritos.php">
-                <span class="material-symbols-outlined text-2xl icon-filled">favorite</span>
-                <span class="text-[10px] font-bold uppercase tracking-tight">Favoritos</span>
-            </a>
-        </nav>
+       <!-- Bottom Navigation Bar -->
+		<?php
+        $nav_active = 'favoritos';
+		require_once 'bottom-nav.php';
+		?>
     </div>
 
     <script src="assets/js/app.js"></script>

@@ -90,21 +90,11 @@ if (!$categoriaSlug) {
         
         <div id="poi-card" class="fixed bottom-24 left-0 right-0 z-[900] px-4 hidden"></div>
         
-        <nav class="fixed bottom-0 left-0 right-0 z-[1000] glass-effect border-t border-black/5 dark:border-white/10 px-8 h-20 pb-safe">
-            <div class="flex items-center justify-around h-full max-w-md mx-auto">
-                <a href="categorias.php" class="flex flex-col items-center gap-1 text-zinc-400">
-                    <span class="material-symbols-outlined text-2xl">explore</span>
-                    <span class="text-[10px] font-bold uppercase tracking-tight">Explorar</span>
-                </a>
-                <a href="favoritos.php" class="flex flex-col items-center gap-1 text-zinc-400">
-                    <div class="relative">
-                        <span class="material-symbols-outlined text-2xl">favorite</span>
-                        <span id="favoritos-badge" class="hidden absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center"></span>
-                    </div>
-                    <span class="text-[10px] font-bold uppercase tracking-tight">Favoritos</span>
-                </a>
-            </div>
-        </nav>
+        <!-- Bottom Navigation Bar -->
+		<?php
+        $nav_active = 'mapa';
+		require_once 'bottom-nav.php';
+		?>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -123,7 +113,6 @@ if (!$categoriaSlug) {
             async init() {
                 this.map = MapaManager.init('map');
                 await this.cargarPOIs();
-                renderFavoritosBadge('favoritos-badge');
             },
             
             async cargarPOIs() {

@@ -63,19 +63,11 @@ if (!$categoriaSlug) {
             </div>
         </main>
         
-        <nav class="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around bg-white dark:bg-[#322818] border-t border-[#f4eee7] dark:border-[#3d311d] px-8 h-20 pb-safe">
-            <button onclick="window.location.href='categorias.php'" class="flex flex-col items-center justify-center gap-1 text-gray-400 dark:text-gray-500">
-                <span class="material-symbols-outlined text-2xl">explore</span>
-                <span class="text-[10px] font-bold uppercase tracking-tight">Explorar</span>
-            </button>
-            <button onclick="window.location.href='favoritos.php'" class="flex flex-col items-center justify-center gap-1 text-gray-400 dark:text-gray-500">
-                <div class="relative">
-                    <span class="material-symbols-outlined text-2xl">favorite</span>
-                    <span id="favoritos-badge" class="hidden absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center"></span>
-                </div>
-                <span class="text-[10px] font-bold uppercase tracking-tight">Favoritos</span>
-            </button>
-        </nav>
+        <!-- Bottom Navigation Bar -->
+		<?php
+        $nav_active = 'lista';
+		require_once 'bottom-nav.php';
+		?>
     </div>
 
     <script src="assets/js/app.js"></script>
@@ -86,7 +78,6 @@ if (!$categoriaSlug) {
         
         document.addEventListener('DOMContentLoaded', () => {
             cargarPOIs();
-            renderFavoritosBadge('favoritos-badge');
             document.getElementById('search-input').addEventListener('input', SevillaSecreta.debounce((e) => {
                 filtrarPOIs(e.target.value);
             }, 300));

@@ -17,6 +17,7 @@ try {
         'total_pois' => $db->query("SELECT COUNT(*) as total FROM pois WHERE activo = 1")->fetchColumn(),
         'total_categorias' => $db->query("SELECT COUNT(*) as total FROM categorias WHERE activa = 1")->fetchColumn(),
         'total_fotos' => $db->query("SELECT COUNT(*) as total FROM fotos_pois")->fetchColumn(),
+        'sugerencias_pendientes' => $db->query("SELECT COUNT(*) as total FROM sugerencias_pois WHERE estado = 'pendiente'")->fetchColumn(),
     ];
 } catch (Exception $e) {
     $stats = ['total_pois' => 0, 'total_categorias' => 0, 'total_fotos' => 0];
@@ -65,7 +66,7 @@ try {
         </div>
         
         <!-- Estadísticas -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                 <div class="flex items-center justify-between">
                     <div>
@@ -77,7 +78,7 @@ try {
                     </div>
                 </div>
             </div>
-            
+
             <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                 <div class="flex items-center justify-between">
                     <div>
@@ -89,7 +90,7 @@ try {
                     </div>
                 </div>
             </div>
-            
+
             <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                 <div class="flex items-center justify-between">
                     <div>
@@ -101,6 +102,31 @@ try {
                     </div>
                 </div>
             </div>
+
+            <a href="sugerencias.php?estado=pendiente"
+               class="rounded-xl shadow-sm p-6 border transition hover:shadow-md group
+                      <?php echo $stats['sugerencias_pendientes'] > 0
+                          ? 'bg-amber-50 border-amber-300'
+                          : 'bg-white border-gray-100'; ?>">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium">Sugerencias</p>
+                        <p class="text-3xl font-bold mt-1 <?php echo $stats['sugerencias_pendientes'] > 0 ? 'text-amber-600' : 'text-gray-800'; ?>">
+                            <?php echo $stats['sugerencias_pendientes']; ?>
+                        </p>
+                        <p class="text-xs mt-1 <?php echo $stats['sugerencias_pendientes'] > 0 ? 'text-amber-600 font-semibold' : 'text-gray-400'; ?>">
+                            <?php echo $stats['sugerencias_pendientes'] > 0 ? 'Pendientes de revisar' : 'Todo al día'; ?>
+                        </p>
+                    </div>
+                    <div class="p-3 rounded-xl transition-transform group-hover:scale-110
+                                <?php echo $stats['sugerencias_pendientes'] > 0 ? 'bg-amber-100' : 'bg-gray-100'; ?>">
+                        <span class="material-symbols-outlined text-3xl
+                                     <?php echo $stats['sugerencias_pendientes'] > 0 ? 'text-amber-500' : 'text-gray-400'; ?>">
+                            <?php echo $stats['sugerencias_pendientes'] > 0 ? 'mark_unread_chat_alt' : 'mark_email_read'; ?>
+                        </span>
+                    </div>
+                </div>
+            </a>
         </div>
         
         <!-- Menú de Gestión -->
@@ -141,6 +167,33 @@ try {
                     <div class="flex-1">
                         <h3 class="text-lg font-bold text-gray-800 mb-1">Logs de Seguridad</h3>
                         <p class="text-sm text-gray-600">Ver eventos del sistema</p>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Sugerencias de usuarios -->
+            <a href="sugerencias.php" class="rounded-xl shadow-sm hover:shadow-md transition p-6 border group
+                <?php echo $stats['sugerencias_pendientes'] > 0
+                    ? 'bg-amber-50 border-amber-300'
+                    : 'bg-white border-gray-100'; ?>">
+                <div class="flex items-start gap-4">
+                    <div class="<?php echo $stats['sugerencias_pendientes'] > 0 ? 'bg-amber-100 group-hover:bg-amber-200' : 'bg-gray-100 group-hover:bg-gray-200'; ?> p-3 rounded-xl transition relative">
+                        <span class="material-symbols-outlined text-3xl <?php echo $stats['sugerencias_pendientes'] > 0 ? 'text-amber-500' : 'text-gray-600'; ?>">
+                            maps_ugc
+                        </span>
+                        <?php if ($stats['sugerencias_pendientes'] > 0): ?>
+                        <span class="absolute -top-1 -right-1 bg-amber-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                            <?php echo min($stats['sugerencias_pendientes'], 99); ?>
+                        </span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-bold text-gray-800 mb-1">Sugerencias</h3>
+                        <p class="text-sm <?php echo $stats['sugerencias_pendientes'] > 0 ? 'text-amber-700 font-medium' : 'text-gray-600'; ?>">
+                            <?php echo $stats['sugerencias_pendientes'] > 0
+                                ? $stats['sugerencias_pendientes'] . ' lugar' . ($stats['sugerencias_pendientes'] !== '1' ? 'es' : '') . ' pendiente' . ($stats['sugerencias_pendientes'] !== '1' ? 's' : '') . ' de revisar'
+                                : 'Lugares propuestos por la comunidad'; ?>
+                        </p>
                     </div>
                 </div>
             </a>

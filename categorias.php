@@ -67,19 +67,10 @@ require_once 'includes/config.php';
         </main>
         
         <!-- Bottom Navigation Bar -->
-        <nav class="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-black/10 dark:border-white/10 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-xl px-8 h-20 pb-safe">
-            <a class="flex flex-col items-center gap-1 text-primary" href="categorias.php">
-                <span class="material-symbols-outlined text-2xl icon-filled">explore</span>
-                <span class="text-[10px] font-bold uppercase tracking-tight">Explorar</span>
-            </a>
-            <a class="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 hover:text-primary transition-colors" href="favoritos.php">
-                <div class="relative">
-                    <span class="material-symbols-outlined text-2xl">favorite</span>
-                    <span id="favoritos-badge" class="hidden absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center"></span>
-                </div>
-                <span class="text-[10px] font-bold uppercase tracking-tight">Favoritos</span>
-            </a>
-        </nav>
+		<?php
+        $nav_active = 'explorar';
+		require_once 'bottom-nav.php';
+		?>
     </div>
 
     <script src="assets/js/app.js"></script>
@@ -87,7 +78,6 @@ require_once 'includes/config.php';
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             cargarCategorias();
-            renderFavoritosBadge('favoritos-badge');
         });
 
         async function cargarCategorias() {
