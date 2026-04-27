@@ -275,10 +275,10 @@ $categorias = $db->query("SELECT id, nombre, color, icono FROM categorias WHERE 
                             type="number" 
                             name="latitud" 
                             id="lat-input"
-                            step="0.000001"
+                            step="any"
                             value="<?php echo $poi['latitud'] ?? '37.3890924'; ?>"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                            readonly
+                            oninput="actualizarMarcador()"
                         >
                     </div>
                     <div>
@@ -287,10 +287,10 @@ $categorias = $db->query("SELECT id, nombre, color, icono FROM categorias WHERE 
                             type="number" 
                             name="longitud" 
                             id="lng-input"
-                            step="0.000001"
+                            step="any"
                             value="<?php echo $poi['longitud'] ?? '-5.9844589'; ?>"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                            readonly
+                            oninput="actualizarMarcador()"
                         >
                     </div>
                 </div>
@@ -445,6 +445,17 @@ $categorias = $db->query("SELECT id, nombre, color, icono FROM categorias WHERE 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script>
+        function actualizarMarcador() {
+            const lat = parseFloat(document.getElementById('lat-input').value);
+            const lng = parseFloat(document.getElementById('lng-input').value);
+            if (isNaN(lat) || isNaN(lng)) return;
+            marker.setLatLng([lat, lng]);
+        }
+
+        document.getElementById('lat-input').addEventListener('input', actualizarMarcador);
+        document.getElementById('lng-input').addEventListener('input', actualizarMarcador);
+
+        
         // Mapa
         const map = L.map('map-selector').setView([<?php echo $poi['latitud'] ?? 37.3890924; ?>, <?php echo $poi['longitud'] ?? -5.9844589; ?>], 15);
         
